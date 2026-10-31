@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>延迟退休年龄计算器 - 男职工 / 原55女 / 原50女 · 法定退休年月</title>
+  <meta name="description" content="免费延迟退休年龄计算器：按国务院渐进式延迟法定退休年龄办法，输入身份与出生年月，估算改革后法定退休年月、延迟月数、弹性提前/延后窗口与最低缴费年限。仅供参考，以人社部及参保地核定为准。" />
+  <meta name="keywords" content="延迟退休计算器,法定退休年龄,延迟退休对照表,男职工退休,女职工退休,弹性退休,最低缴费年限" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://retire.hpn6.com/" />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #5a6a7a;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #0d9488;
+      --warn: #b45309;
+      --good: #047857;
+      --bad: #b91c1c;
+      --shadow: 0 8px 24px rgba(26, 35, 50, 0.08);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #eef3ff 0%, var(--bg) 220px);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
+    header.hero { margin-bottom: 18px; }
+    header.hero h1 {
+      font-size: clamp(1.35rem, 4vw, 1.85rem);
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    header.hero p.lead { margin: 0; color: var(--muted); font-size: 0.98rem; }
+    .disclaimer {
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      color: var(--warn);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .stats-bar {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin: 14px 0 18px; font-size: 0.85rem; color: var(--muted);
+    }
+    .stats-bar span {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 999px; padding: 4px 12px;
+    }
+    .stats-bar strong { color: var(--text); }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 18px 18px 16px; margin-bottom: 16px;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    .card h3 { margin: 16px 0 8px; font-size: 0.95rem; color: var(--muted); font-weight: 600; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px 14px;
+    }
+    .field label {
+      display: block; font-size: 0.86rem; color: var(--muted); margin-bottom: 4px;
+    }
+    .field input, .field select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 1rem; background: #fff; color: var(--text);
+    }
+    .field input:focus, .field select:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.25); border-color: var(--primary);
+    }
+    .field .hint { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .id-mode {
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+    }
+    .id-mode label {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px;
+      background: #fff; font-size: 0.92rem; cursor: pointer; color: var(--text);
+    }
+    .id-mode input { margin-top: 3px; accent-color: var(--primary); flex-shrink: 0; }
+    .id-mode label.active {
+      border-color: var(--primary); background: #eff6ff;
+    }
+    .id-mode .title { font-weight: 700; }
+    .id-mode .desc { display: block; margin-top: 2px; font-size: 0.82rem; color: var(--muted); font-weight: 400; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button {
+      appearance: none; border: none; border-radius: 10px;
+      padding: 11px 16px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
+    }
+    button.primary { background: var(--primary); color: #fff; flex: 1; min-width: 140px; }
+    button.primary:hover { background: var(--primary-hover); }
+    button.ghost { background: #f1f5f9; color: var(--text); }
+    button.ghost:hover { background: #e2e8f0; }
+    .error {
+      display: none; margin-top: 12px; padding: 10px 12px;
+      border-radius: 10px; background: #fef2f2; color: var(--bad); font-size: 0.92rem;
+    }
+    .error.show { display: block; }
+    .result-hidden { display: none; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .metric {
+      background: #f8fafc; border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
+    }
+    .metric .k { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    .metric .v { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .metric .v.good { color: var(--good); }
+    .metric .v.warn { color: var(--warn); }
+    .highlight {
+      margin-top: 4px; padding: 14px; border-radius: 12px;
+      background: linear-gradient(135deg, #ecfdf5, #f0f9ff);
+      border: 1px solid #bbf7d0;
+    }
+    .highlight .sub { font-size: 0.85rem; color: var(--muted); }
+    .highlight .big { font-size: 1.55rem; font-weight: 800; color: var(--good); margin: 4px 0; }
+    .note { font-size: 0.88rem; color: var(--muted); margin: 12px 0 0; }
+    .result-disclaimer {
+      margin-top: 14px; padding: 10px 12px;
+      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+      color: var(--warn); font-size: 0.9rem; font-weight: 600;
+    }
+    details.faq { border-top: 1px solid var(--border); padding: 10px 0; }
+    details.faq:first-of-type { border-top: none; }
+    details.faq summary { cursor: pointer; font-weight: 600; }
+    details.faq p { margin: 8px 0 0; color: var(--muted); font-size: 0.92rem; }
+    .copy-box {
+      margin-top: 12px; padding: 12px; background: #f8fafc;
+      border: 1px dashed var(--border); border-radius: 10px;
+      font-size: 0.88rem; white-space: pre-wrap; word-break: break-word;
+      color: var(--text); max-height: 260px; overflow: auto;
+    }
+    footer {
+      margin-top: 8px; text-align: center; color: var(--muted); font-size: 0.82rem;
+    }
+    footer .foot-warn {
+      margin: 0 0 8px; padding: 10px 12px;
+      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+      color: var(--warn); font-weight: 600; font-size: 0.88rem; text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <h1>延迟退休年龄计算器</h1>
+      <p class="lead">按国务院渐进式延迟法定退休年龄办法（2025 年起施行）估算改革后法定退休年月、延迟月数、弹性窗口与最低缴费年限</p>
+      <p class="disclaimer">以参保地社保经办机构核定为准；本页仅供参考，不构成法律或经办意见。特殊工种、干部人事管理等另有规定的，从其规定。</p>
+      <div class="stats-bar" aria-label="本地使用统计">
+        <span>开始计算：<strong id="stat-start">0</strong></span>
+        <span>算出结果：<strong id="stat-done">0</strong></span>
+        <span>完成率：<strong id="stat-rate">—</strong></span>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">填写信息</h2>
+
+      <div class="id-mode" role="radiogroup" aria-label="人员身份">
+        <label class="active" id="lab-male">
+          <input type="radio" name="personType" value="male" checked />
+          <span>
+            <span class="title">男职工</span>
+            <span class="desc">原法定退休年龄 60 周岁 → 逐步延迟至 63 周岁（每 4 个月延迟 1 个月）</span>
+          </span>
+        </label>
+        <label id="lab-female55">
+          <input type="radio" name="personType" value="female55" />
+          <span>
+            <span class="title">原 55 周岁退休女职工</span>
+            <span class="desc">常见于干部、管理/技术岗等（以单位与参保地认定为准）→ 逐步延迟至 58 周岁（每 4 个月延迟 1 个月）</span>
+          </span>
+        </label>
+        <label id="lab-female50">
+          <input type="radio" name="personType" value="female50" />
+          <span>
+            <span class="title">原 50 周岁退休女职工</span>
+            <span class="desc">常见于工人、生产/操作岗等（以单位与参保地认定为准）→ 逐步延迟至 55 周岁（每 2 个月延迟 1 个月）</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="birthYear">出生年份</label>
+          <input id="birthYear" type="number" min="1940" max="2010" step="1" value="1972" inputmode="numeric" />
+          <div class="hint">公历出生年</div>
+        </div>
+        <div class="field">
+          <label for="birthMonth">出生月份</label>
+          <select id="birthMonth">
+            <option value="1">1 月</option>
+            <option value="2">2 月</option>
+            <option value="3">3 月</option>
+            <option value="4">4 月</option>
+            <option value="5">5 月</option>
+            <option value="6">6 月</option>
+            <option value="7">7 月</option>
+            <option value="8">8 月</option>
+            <option value="9" selected>9 月</option>
+            <option value="10">10 月</option>
+            <option value="11">11 月</option>
+            <option value="12">12 月</option>
+          </select>
+          <div class="hint">按身份证出生年月</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="btn-calc">计算</button>
+        <button type="button" class="ghost" id="btn-reset">填入示例</button>
+      </div>
+      <div class="error" id="error" role="alert"></div>
+    </section>
+
+    <section class="card result-hidden" id="result" aria-labelledby="result-title">
+      <h2 id="result-title">计算结果</h2>
+      <div class="highlight">
+        <div class="sub">改革后法定退休年月</div>
+        <div class="big" id="out-retire-ym">—</div>
+        <div class="sub" id="out-age-line">—</div>
+      </div>
+      <div class="metrics" style="margin-top:12px">
+        <div class="metric">
+          <span class="k">相对原政策延迟</span>
+          <span class="v" id="out-delay">—</span>
+        </div>
+        <div class="metric">
+          <span class="k">原法定退休年龄</span>
+          <span class="v" id="out-orig">—</span>
+        </div>
+        <div class="metric">
+          <span class="k">改革后法定年龄</span>
+          <span class="v good" id="out-new-age">—</span>
+        </div>
+        <div class="metric">
+          <span class="k">最低缴费年限提示</span>
+          <span class="v warn" id="out-min-years">—</span>
+        </div>
+      </div>
+      <h3>弹性退休窗口（简述）</h3>
+      <p class="note" id="out-elastic" style="margin-top:0"></p>
+      <p class="result-disclaimer">重要：最终退休时间、人员类别与最低缴费年限，均以人社部政策及参保地社保经办机构核定为准；本页仅为公开办法对照估算。</p>
+      <div class="actions">
+        <button type="button" class="ghost" id="btn-copy">复制结果</button>
+        <span class="note" id="copy-hint" style="margin:0;align-self:center"></span>
+      </div>
+      <div class="copy-box" id="copy-text" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="rule-title">
+      <h2 id="rule-title">规则说明与常见问题</h2>
+      <details class="faq" open>
+        <summary>本页依据什么计算？</summary>
+        <p>依据《全国人民代表大会常务委员会关于实施渐进式延迟法定退休年龄的决定》及所附《国务院关于渐进式延迟法定退休年龄的办法》（自 2025 年 1 月 1 日起施行），并对照国务院公布的三类延迟法定退休年龄对照表口径：男职工与原 55 周岁女职工每 4 个月延迟 1 个月；原 50 周岁女职工每 2 个月延迟 1 个月。延迟月数封顶至目标年龄（男 63 / 原 55 女 58 / 原 50 女 55）。</p>
+      </details>
+      <details class="faq">
+        <summary>「原 55 / 原 50」女职工怎么选？</summary>
+        <p>改革前女干部等原 55 周岁退休、女工人等原 50 周岁退休。具体岗位是否按原 55 或原 50 认定，由单位与参保地规则决定，本页无法代替认定——选错身份结果会差数年，不确定时请向单位或社保经办机构确认后再算。</p>
+      </details>
+      <details class="faq">
+        <summary>弹性提前 / 延后是什么意思？</summary>
+        <p>达到最低缴费年限后，可自愿弹性提前退休，最长不超过 3 年，且不得低于原法定退休年龄（男 60、原 55 女 55、原 50 女 50）。达到改革后法定退休年龄后，经与单位协商一致，可弹性延迟退休，最长不超过 3 年。不得违法强制选择退休年龄。公务员及国有企事业单位领导人员等另有报批规定。</p>
+      </details>
+      <details class="faq">
+        <summary>最低缴费年限怎么变？</summary>
+        <p>2029 年及以前达到法定退休年龄：仍为 15 年。自 2030 年起每年提高 6 个月，逐步至 20 年；2039 年及以后统一为 20 年。本页按「改革后法定退休时间所在公历年」给出对应提示；弹性提前时，应按拟提前退休年份对应的最低年限执行（以官方细则为准）。</p>
+      </details>
+      <details class="faq">
+        <summary>哪些情况本页可能不准？</summary>
+        <p>特殊工种提前退休、高海拔等另有规定、干部人事管理权限报批、户籍/档案出生年月不一致、视同缴费年限认定差异等，均可能导致结果与经办核定不同。请以参保地核定为准。</p>
+      </details>
+    </section>
+
+    <footer>
+      <p class="foot-warn">免责声明：本工具依据公开政策做对照估算，仅供参考。法定退休年龄、人员类别、最低缴费年限及养老金待遇，一律以人力资源社会保障部门及参保地社保经办机构核定为准。</p>
+      <p>retire.hpn6.com · 静态单页 · 数据仅存本机浏览器</p>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    var STAT_KEY = "retire-age-stats-v1";
+    var TYPES = {
+      male: {
+        id: "male",
+        label: "男职工",
+        origYears: 60,
+        maxDelay: 36,
+        period: 4,
+        // 原 60 岁在 2025-01 起受影响：1965-01 起
+        baseYear: 1965,
+        baseMonth: 1
+      },
+      female55: {
+        id: "female55",
+        label: "原55周岁退休女职工",
+        origYears: 55,
+        maxDelay: 36,
+        period: 4,
+        // 原 55 岁在 2025-01：1970-01 起
+        baseYear: 1970,
+        baseMonth: 1
+      },
+      female50: {
+        id: "female50",
+        label: "原50周岁退休女职工",
+        origYears: 50,
+        maxDelay: 60,
+        period: 2,
+        // 原 50 岁在 2025-01：1975-01 起
+        baseYear: 1975,
+        baseMonth: 1
+      }
+    };
+
+    function loadStats() {
+      try {
+        var raw = localStorage.getItem(STAT_KEY);
+        if (!raw) return { start: 0, done: 0 };
+        var o = JSON.parse(raw);
+        return { start: o.start | 0, done: o.done | 0 };
+      } catch (e) {
+        return { start: 0, done: 0 };
+      }
+    }
+    function saveStats(s) {
+      try { localStorage.setItem(STAT_KEY, JSON.stringify(s)); } catch (e) {}
+    }
+    function renderStats() {
+      var s = loadStats();
+      document.getElementById("stat-start").textContent = String(s.start);
+      document.getElementById("stat-done").textContent = String(s.done);
+      document.getElementById("stat-rate").textContent =
+        s.start > 0 ? ((s.done / s.start) * 100).toFixed(1) + "%" : "—";
+    }
+    function bump(kind) {
+      var s = loadStats();
+      if (kind === "start") s.start += 1;
+      if (kind === "done") s.done += 1;
+      saveStats(s);
+      renderStats();
+    }
+    renderStats();
+
+    function setError(msg) {
+      var el = document.getElementById("error");
+      if (msg) {
+        el.textContent = msg;
+        el.classList.add("show");
+      } else {
+        el.textContent = "";
+        el.classList.remove("show");
+      }
+    }
+
+    function personType() {
+      var checked = document.querySelector('input[name="personType"]:checked');
+      return checked ? checked.value : "male";
+    }
+
+    function updateTypeLabels() {
+      var t = personType();
+      ["male", "female55", "female50"].forEach(function (id) {
+        var lab = document.getElementById("lab-" + id);
+        if (lab) lab.classList.toggle("active", t === id);
+      });
+    }
+
+    function monthsBetween(y1, m1, y2, m2) {
+      return (y2 - y1) * 12 + (m2 - m1);
+    }
+
+    function addMonths(y, m, add) {
+      var idx = (y * 12 + (m - 1)) + add;
+      var ny = Math.floor(idx / 12);
+      var nm = (idx % 12) + 1;
+      return { year: ny, month: nm };
+    }
+
+    function formatYM(y, m) {
+      return y + " 年 " + m + " 月";
+    }
+
+    function formatAge(totalMonths) {
+      var y = Math.floor(totalMonths / 12);
+      var m = totalMonths % 12;
+      if (m === 0) return y + " 周岁";
+      return y + " 周岁 " + m + " 个月";
+    }
+
+    function formatYearsHint(years) {
+      var whole = Math.floor(years);
+      var half = Math.abs(years - whole) > 0.01;
+      if (half) return whole + " 年 6 个月";
+      return whole + " 年";
+    }
+
+    /**
+     * 对照国务院附件口径：
+     * 从「原法定退休年龄对应的改革起点出生年月」起，按 period 个月为一档，
+     * 每档延迟 1 个月，延迟月数 = ceil(距起点月序 / period)，封顶 maxDelay。
+     * 起点之前出生：延迟 0（仍按原年龄退休）。
+     */
+    function computeDelay(type, by, bm) {
+      var meta = TYPES[type];
+      var startIdx = monthsBetween(meta.baseYear, meta.baseMonth, by, bm) + 1;
+      // startIdx：以 baseYear-baseMonth 为第 1 个月
+      if (startIdx <= 0) {
+        return { delay: 0, beforeReform: true };
+      }
+      var delay = Math.ceil(startIdx / meta.period);
+      if (delay > meta.maxDelay) delay = meta.maxDelay;
+      return { delay: delay, beforeReform: false };
+    }
+
+    function minContributionYears(retireYear) {
+      if (retireYear <= 2029) return 15;
+      if (retireYear >= 2039) return 20;
+      return 15 + (retireYear - 2029) * 0.5;
+    }
+
+    function calcResult(type, by, bm) {
+      var meta = TYPES[type];
+      var d = computeDelay(type, by, bm);
+      var delay = d.delay;
+      var origMonths = meta.origYears * 12;
+      var newAgeMonths = origMonths + delay;
+      var retire = addMonths(by, bm, newAgeMonths);
+      var origRetire = addMonths(by, bm, origMonths);
+
+      // 弹性提前：最多 36 个月，且不得低于原法定年龄
+      var earlyMax = Math.min(36, delay);
+      var earlyFrom = addMonths(retire.year, retire.month, -earlyMax);
+      // 弹性延后：法定后最多 36 个月
+      var lateTo = addMonths(retire.year, retire.month, 36);
+
+      var minYears = minContributionYears(retire.year);
+
+      return {
+        type: type,
+        meta: meta,
+        birthYear: by,
+        birthMonth: bm,
+        delay: delay,
+        beforeReform: d.beforeReform,
+        newAgeMonths: newAgeMonths,
+        retire: retire,
+        origRetire: origRetire,
+        earlyMax: earlyMax,
+        earlyFrom: earlyFrom,
+        lateTo: lateTo,
+        minYears: minYears
+      };
+    }
+
+    function elasticText(r) {
+      var lines = [];
+      if (r.earlyMax > 0) {
+        lines.push(
+          "弹性提前：在满足拟退休年份对应最低缴费年限前提下，最早可提前至 " +
+          formatYM(r.earlyFrom.year, r.earlyFrom.month) +
+          "（最长提前 " + r.earlyMax + " 个月，且不得低于原法定退休年龄 " +
+          r.meta.origYears + " 周岁）。须至少提前 3 个月书面告知单位。"
+        );
+      } else {
+        lines.push(
+          "弹性提前：改革后法定年龄已与原法定年龄相同，按办法「不得低于原法定退休年龄」，提前空间为 0 个月（仍请以参保地核定为准）。"
+        );
+      }
+      lines.push(
+        "弹性延后：达到改革后法定退休年龄后，与单位协商一致，最晚可延至 " +
+        formatYM(r.lateTo.year, r.lateTo.month) +
+        "（最长延后 3 年）。机关与国有企事业单位等另有报批规定。"
+      );
+      lines.push("请以人社部《实施弹性退休制度暂行办法》及参保地细则为准。");
+      return lines.join("\n");
+    }
+
+    function calc() {
+      bump("start");
+      setError("");
+      var type = personType();
+      var by = parseInt(document.getElementById("birthYear").value, 10);
+      var bm = parseInt(document.getElementById("birthMonth").value, 10);
+      if (!TYPES[type]) {
+        setError("请选择人员身份。");
+        return;
+      }
+      if (!isFinite(by) || by < 1940 || by > 2010) {
+        setError("请填写有效出生年份（1940–2010）。");
+        return;
+      }
+      if (!isFinite(bm) || bm < 1 || bm > 12) {
+        setError("请选择有效出生月份。");
+        return;
+      }
+
+      var r = calcResult(type, by, bm);
+
+      document.getElementById("out-retire-ym").textContent =
+        formatYM(r.retire.year, r.retire.month);
+      document.getElementById("out-age-line").textContent =
+        "改革后法定退休年龄：" + formatAge(r.newAgeMonths) +
+        "（原政策对应退休：" + formatYM(r.origRetire.year, r.origRetire.month) + "）";
+      document.getElementById("out-delay").textContent =
+        r.delay === 0 ? "0 个月（未进入延迟）" : r.delay + " 个月";
+      document.getElementById("out-orig").textContent = r.meta.origYears + " 周岁";
+      document.getElementById("out-new-age").textContent = formatAge(r.newAgeMonths);
+      document.getElementById("out-min-years").textContent =
+        formatYearsHint(r.minYears) +
+        "（按法定退休年 " + r.retire.year + "）";
+      document.getElementById("out-elastic").textContent = elasticText(r);
+
+      var copy =
+        "【延迟退休年龄估算】\n" +
+        "身份：" + r.meta.label + "\n" +
+        "出生：" + formatYM(r.birthYear, r.birthMonth) + "\n" +
+        "原法定退休年龄：" + r.meta.origYears + " 周岁（约 " +
+        formatYM(r.origRetire.year, r.origRetire.month) + "）\n" +
+        "改革后法定退休年龄：" + formatAge(r.newAgeMonths) + "\n" +
+        "改革后法定退休年月：" + formatYM(r.retire.year, r.retire.month) + "\n" +
+        "相对原政策延迟：" + r.delay + " 个月\n" +
+        "最低缴费年限提示：" + formatYearsHint(r.minYears) +
+        "（对应法定退休年 " + r.retire.year + "；弹性提前时按拟退休年对应年限）\n" +
+        "弹性窗口：\n" + elasticText(r) + "\n" +
+        "——\n" +
+        "依据：全国人大常委会决定及国务院渐进式延迟法定退休年龄办法（2025-01-01 起施行）。\n" +
+        "免责：以参保地社保经办机构核定为准；本页仅供参考。";
+      document.getElementById("copy-text").textContent = copy;
+      document.getElementById("copy-hint").textContent = "";
+      document.getElementById("result").classList.remove("result-hidden");
+      bump("done");
+      document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function resetExample() {
+      document.querySelector('input[name="personType"][value="male"]').checked = true;
+      updateTypeLabels();
+      document.getElementById("birthYear").value = "1972";
+      document.getElementById("birthMonth").value = "9";
+      setError("");
+      document.getElementById("result").classList.add("result-hidden");
+    }
+
+    document.querySelectorAll('input[name="personType"]').forEach(function (r) {
+      r.addEventListener("change", updateTypeLabels);
+    });
+    document.getElementById("btn-calc").addEventListener("click", calc);
+    document.getElementById("btn-reset").addEventListener("click", resetExample);
+    document.getElementById("btn-copy").addEventListener("click", function () {
+      var text = document.getElementById("copy-text").textContent;
+      var hint = document.getElementById("copy-hint");
+      function ok() { hint.textContent = "已复制到剪贴板。"; }
+      function fail() { hint.textContent = "复制失败，请手动选中上方文本复制。"; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok).catch(fail);
+      } else {
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          ok();
+        } catch (e) { fail(); }
+      }
+    });
+
+    updateTypeLabels();
+  })();
+  </script>
+</body>
+</html>
